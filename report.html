@@ -1,0 +1,396 @@
+<!-- <!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .chart-container {
+            width: 80%;
+            margin: auto;
+        }
+        .form-container {
+            margin: 20px auto;
+            text-align: center;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Table Report</h1>
+    <div class="form-container">
+        <label for="chartType">Select Chart Type:</label>
+        <select id="chartType">
+            <option value="line">Line Chart</option>
+            <option value="bar">Bar Chart</option>
+        </select>
+        <label for="xAxis">Select X-axis:</label>
+        <select id="xAxis"></select>
+        <label for="yAxis">Select Y-axis:</label>
+        <select id="yAxis"></select>
+        <button id="generateChart">Generate Chart</button>
+    </div>
+    <div class="chart-container">
+        <canvas id="chartCanvas"></canvas>
+    </div>
+    <div class="button-container">
+        <button onclick="window.location.href='/'">Back to Table List</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tableName = urlParams.get('tableName');
+            if (!tableName) {
+                alert('Table name not provided!');
+                return;
+            }
+
+            const response = await fetch(`http://localhost:3004/tableData?tableName=${tableName}`);
+            const data = await response.json();
+            if (!response.ok) {
+                alert('Error fetching table data');
+                return;
+            }
+
+            const columnNames = Object.keys(data[0]);
+            const xAxisSelect = document.getElementById('xAxis');
+            const yAxisSelect = document.getElementById('yAxis');
+
+            columnNames.forEach(column => {
+                const option = document.createElement('option');
+                option.value = column;
+                option.text = column;
+                xAxisSelect.appendChild(option.cloneNode(true));
+                yAxisSelect.appendChild(option);
+            });
+
+            document.getElementById('generateChart').addEventListener('click', () => {
+                const chartType = document.getElementById('chartType').value;
+                const xAxis = xAxisSelect.value;
+                const yAxis = yAxisSelect.value;
+                if (!xAxis || !yAxis) {
+                    alert('Please select both X and Y axes');
+                    return;
+                }
+
+                const xAxisData = data.map(row => row[xAxis]);
+                const yAxisData = data.map(row => row[yAxis]);
+
+                const ctx = document.getElementById('chartCanvas').getContext('2d');
+                let chartConfig = {};
+
+                if (chartType === 'line') {
+                    chartConfig = {
+                        type: 'line',
+                        data: {
+                            labels: xAxisData,
+                            datasets: [{
+                                label: `${yAxis} vs ${xAxis}`,
+                                data: yAxisData,
+                                fill: false,
+                                borderColor: getRandomColor(),
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: `Line Chart for ${tableName}`
+                                }
+                            }
+                        }
+                    };
+                } else if (chartType === 'bar') {
+                    chartConfig = {
+                        type: 'bar',
+                        data: {
+                            labels: xAxisData,
+                            datasets: [{
+                                label: `${yAxis} vs ${xAxis}`,
+                                data: yAxisData,
+                                backgroundColor: xAxisData.map(() => getRandomColor()),
+                                borderColor: xAxisData.map(() => getRandomColor()),
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: `Bar Chart for ${tableName}`
+                                }
+                            }
+                        }
+                    };
+                }
+
+                if (window.myChart instanceof Chart) {
+                    window.myChart.destroy();
+                }
+                window.myChart = new Chart(ctx, chartConfig);
+            });
+        });
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+    </script>
+</body>
+</html> -->
+
+
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Report</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f0f2f5;
+                color: #333;
+                padding: 20px;
+                margin: 0;
+            }
+            h1 {
+                text-align: center;
+                color: #444;
+            }
+            .chart-container {
+                width: 80%;
+                margin: 40px auto;
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .form-container {
+                margin: 20px auto;
+                text-align: center;
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                max-width: 800px;
+            }
+            .form-container label {
+                margin: 0 10px;
+                font-weight: bold;
+            }
+            .form-container select, .form-container button {
+                margin: 0 10px;
+                padding: 5px 10px;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+                font-size: 16px;
+            }
+            .form-container button {
+                background-color: #6c6f74;
+                color: #fff;
+                border: none;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+            .form-container button:hover {
+                background-color: #363738;
+            }
+            .button-container {
+                text-align: center;
+                margin-top: 20px;
+            }
+            .button-container button {
+                padding: 10px 20px;
+                background-color: #6c6f74;
+                color: #fff;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                transition: background-color 0.3s ease;
+            }
+            .button-container button:hover {
+                background-color: #363738;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Table Report</h1>
+        <div class="form-container">
+            <label for="chartType">Select Chart Type:</label>
+            <select id="chartType">
+                <option value="line">Line Chart</option>
+                <option value="bar">Bar Chart</option>
+            </select>
+            <label for="xAxis">Select X-axis:</label>
+            <select id="xAxis"></select>
+            <label for="yAxis">Select Y-axis:</label>
+            <select id="yAxis"></select>
+            <button id="generateChart">Generate Chart</button>
+        </div>
+        <div class="chart-container">
+            <canvas id="chartCanvas"></canvas>
+        </div>
+        <div class="button-container">
+            <button onclick="window.location.href='/'">
+                Back to Table List
+            </button>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", async () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const tableName = urlParams.get("tableName");
+                if (!tableName) {
+                    alert("Table name not provided!");
+                    return;
+                }
+
+                const response = await fetch(
+                    `http://localhost:3004/tableData?tableName=${tableName}`,
+                );
+                const data = await response.json();
+                if (!response.ok) {
+                    alert("Error fetching table data");
+                    return;
+                }
+
+                const columnNames = Object.keys(data[0]);
+                const xAxisSelect = document.getElementById("xAxis");
+                const yAxisSelect = document.getElementById("yAxis");
+
+                columnNames.forEach((column) => {
+                    const option = document.createElement("option");
+                    option.value = column;
+                    option.text = column;
+                    xAxisSelect.appendChild(option.cloneNode(true));
+                    yAxisSelect.appendChild(option);
+                });
+
+                document
+                    .getElementById("generateChart")
+                    .addEventListener("click", () => {
+                        const chartType =
+                            document.getElementById("chartType").value;
+                        const xAxis = xAxisSelect.value;
+                        const yAxis = yAxisSelect.value;
+                        if (!xAxis || !yAxis) {
+                            alert("Please select both X and Y axes");
+                            return;
+                        }
+
+                        const xAxisData = data.map((row) => row[xAxis]);
+                        const yAxisData = data.map((row) => row[yAxis]);
+
+                        const ctx = document
+                            .getElementById("chartCanvas")
+                            .getContext("2d");
+                        let chartConfig = {};
+
+                        if (chartType === "line") {
+                            chartConfig = {
+                                type: "line",
+                                data: {
+                                    labels: xAxisData,
+                                    datasets: [
+                                        {
+                                            label: `${yAxis} vs ${xAxis}`,
+                                            data: yAxisData,
+                                            fill: false,
+                                            borderColor: getRandomColor(),
+                                            tension: 0.1,
+                                        },
+                                    ],
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        legend: {
+                                            position: "top",
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: `Line Chart for ${tableName}`,
+                                        },
+                                    },
+                                },
+                            };
+                        } else if (chartType === "bar") {
+                            chartConfig = {
+                                type: "bar",
+                                data: {
+                                    labels: xAxisData,
+                                    datasets: [
+                                        {
+                                            label: `${yAxis} vs ${xAxis}`,
+                                            data: yAxisData,
+                                            backgroundColor: xAxisData.map(() =>
+                                                getRandomColor(),
+                                            ),
+                                            borderColor: xAxisData.map(() =>
+                                                getRandomColor(),
+                                            ),
+                                            borderWidth: 1,
+                                        },
+                                    ],
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        legend: {
+                                            position: "top",
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: `Bar Chart for ${tableName}`,
+                                        },
+                                    },
+                                },
+                            };
+                        }
+
+                        if (window.myChart instanceof Chart) {
+                            window.myChart.destroy();
+                        }
+                        window.myChart = new Chart(ctx, chartConfig);
+                    });
+            });
+
+            function getRandomColor() {
+                const letters = "0123456789ABCDEF";
+                let color = "#";
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
+        </script>
+    </body>
+</html>
+
+

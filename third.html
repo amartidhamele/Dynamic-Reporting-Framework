@@ -1,0 +1,612 @@
+<!-- <!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Table</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            text-align: center;
+            background-color: #f2f2f2;
+        }
+        .button-container {
+            text-align: right;
+            margin-top: 10px;
+        }
+        .table-container {
+            margin-top: 20px;
+        }
+        #tables {
+            text-align: left;
+        }
+        #t1 {
+            width: 30%;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Serial No.</th>
+                <th>Field</th>
+                <th>New Name (Optional)</th>
+            </tr>
+        </thead>
+        <tbody id="id1">
+        </tbody>
+    </table>
+    <div class="button-container">
+        <button onclick="createTable()">CREATE TABLE</button>
+    </div>
+    <div class="table-container">
+        <h2>Existing Tables</h2>
+        <table id="t1">
+            <thead>
+                <tr>
+                    <th>Table Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tables">
+            </tbody>
+        </table>
+    </div>
+    <div class="button-container">
+        <button id="generateReportBtn" style="display: none;">Generate Report</button>
+    </div>
+
+     Modal for viewing table data -->
+<!-- <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Table Data</h2>
+            <div id="tableData" class="table-wrapper"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const selectedFields = JSON.parse(localStorage.getItem('selectedFields')) || [];
+            const tbody = document.getElementById('id1');
+            tbody.innerHTML = '';
+            selectedFields.forEach((field, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${field.original}</td>
+                    <td><input type="text" value="${field.newName}" placeholder="Optional" /></td>
+                `;
+                tbody.appendChild(row);
+            });
+            fetchTables();
+        });
+
+        async function createTable() {
+            const rows = document.querySelectorAll('#id1 tr');
+            const fields = [];
+            rows.forEach(row => {
+                const fieldName = row.cells[1].innerText;
+                const newName = row.cells[2].querySelector('input').value || fieldName;
+                fields.push(newName);
+            });
+            const tableName = prompt("Enter new table name:");
+            if (tableName) {
+                const response = await fetch('http://localhost:3004/createTable', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tableName, fields })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Table created successfully!');
+                    fetchTables();
+                    document.getElementById('generateReportBtn').style.display = 'inline-block';
+                } else {
+                    alert(`Error: ${result.error}`);
+                }
+            }
+        }
+
+        async function fetchTables() {
+            try {
+                const response = await fetch('http://localhost:3004/tables');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const tables = await response.json();
+                const tbody = document.getElementById('tables');
+                tbody.innerHTML = '';
+                tables.forEach((table, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${table}</td>
+                        <td>
+                            <button onclick="viewTable('${table}')">View</button>
+                            <button onclick="deleteTable('${table}')">Delete</button>
+                            <button onclick="generateReport('${table}')">Generate Report</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching tables:', error);
+            }
+        }
+
+        async function viewTable(tableName) {
+            try {
+                const response = await fetch(`http://localhost:3004/tableData?tableName=${tableName}`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                displayTableData(data);
+                document.getElementById('viewModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error fetching table data:', error);
+            }
+        }
+
+        function displayTableData(data) {
+            const tableDataDiv = document.getElementById('tableData');
+            tableDataDiv.innerHTML = '';
+
+            if (data.length === 0) {
+                tableDataDiv.innerHTML = '<p>No data available in this table.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            const headerRow = document.createElement('tr');
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            data.forEach(row => {
+                const dataRow = document.createElement('tr');
+                Object.values(row).forEach(value => {
+                    const td = document.createElement('td');
+                    td.textContent = value;
+                    dataRow.appendChild(td);
+                });
+                tbody.appendChild(dataRow);
+            });
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            tableDataDiv.appendChild(table);
+        }
+
+        function closeModal() {
+            document.getElementById('viewModal').style.display = 'none';
+        }
+
+        async function deleteTable(tableName) {
+            if (confirm(`Are you sure you want to delete the table "${tableName}"?`)) {
+                try {
+                    const response = await fetch('http://localhost:3004/deleteTable', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ tableName })
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        alert('Table deleted successfully!');
+                        fetchTables();
+                    } else {
+                        alert(`Error: ${result.error}`);
+                    }
+                } catch (error) {
+                    console.error('Error deleting table:', error);
+                }
+            }
+        }
+
+        function generateReport(tableName) {
+            window.location.href = `report.html?tableName=${tableName}`;
+        }
+    </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Table</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f2f5;
+        color: #333;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+      }
+      nav {
+        background-color: #333;
+        font-family: Arial, sans-serif;
+        width: 100%;
+        color: #fff;
+        padding: 0.5em;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      nav ul {
+        list-style: none;
+        margin: 5px;
+        padding: 0;
+      }
+
+      nav ul li {
+        display: inline;
+        margin-right: 1em;
+      }
+
+      nav ul li a {
+        color: #fff;
+        text-decoration: none;
+      }
+      h2 {
+        color: #444;
+      }
+      table {
+        border-collapse: collapse;
+        width: 98%;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        padding: 20px;
+        margin:10px;
+      }
+      h1{
+        margin: 10px;
+      }
+      th,
+      td {
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: center;
+      }
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      .button-container {
+        text-align: right;
+        margin-top: 10px;
+      }
+      .table-container {
+        margin-top: 20px;
+      }
+      #t1 {
+        width: 100%;
+      }
+      button {
+        padding: 10px 10px;
+        background-color: #6c6f74;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: background-color 0.3s ease;
+        margin-right: 1%;
+      }
+      button:hover {
+        background-color: #363738;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+      .modal-content {
+        background-color: #fff;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        border-radius: 8px;
+        width: 80%;
+        max-height: 90%;
+        overflow-y: auto;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .table-wrapper {
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+    <nav>
+      <ul>
+        <li><a href="#" id="home-link">Home</a></li>
+      </ul>
+      <h1>Dynamic Reporting Framework</h1>
+    </nav>
+  <body>
+    <h1 id="header">Create Table</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Serial No.</th>
+          <th>Field</th>
+          <th>New Name (Optional)</th>
+        </tr>
+      </thead>
+      <tbody id="id1"></tbody>
+    </table>
+    <div class="button-container">
+      <button onclick="createTable()">CREATE TABLE</button>
+    </div>
+    <div class="table-container">
+      <h2>Existing Tables</h2>
+      <table id="t1">
+        <thead>
+          <tr>
+            <th>Table Name</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tables"></tbody>
+      </table>
+    </div>
+    <div class="button-container">
+      <button id="generateReportBtn" style="display: none">
+        Generate Report
+      </button>
+    </div>
+
+    <!-- Modal for viewing table data -->
+    <div id="viewModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>Table Data</h2>
+        <div id="tableData" class="table-wrapper"></div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const selectedFields =
+          JSON.parse(localStorage.getItem("selectedFields")) || [];
+        const tbody = document.getElementById("id1");
+        tbody.innerHTML = "";
+        selectedFields.forEach((field, index) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${field.original}</td>
+                    <td><input type="text" value="${
+                      field.newName
+                    }" placeholder="Optional" /></td>
+                `;
+          tbody.appendChild(row);
+        });
+        fetchTables();
+      });
+
+      async function createTable() {
+        const rows = document.querySelectorAll("#id1 tr");
+        const fields = [];
+        rows.forEach((row) => {
+          const fieldName = row.cells[1].innerText;
+          const newName =
+            row.cells[2].querySelector("input").value || fieldName;
+          fields.push(newName);
+        });
+        const tableName = prompt("Enter new table name:");
+        if (tableName) {
+          const response = await fetch("http://localhost:3004/createTable", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ tableName, fields }),
+          });
+          const result = await response.json();
+          if (response.ok) {
+            alert("Table created successfully!");
+            fetchTables();
+            document.getElementById("generateReportBtn").style.display =
+              "inline-block";
+          } else {
+            alert(`Error: ${result.error}`);
+          }
+        }
+      }
+
+      async function fetchTables() {
+        try {
+          const response = await fetch("http://localhost:3004/tables");
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          const tables = await response.json();
+          const tbody = document.getElementById("tables");
+          tbody.innerHTML = "";
+          tables.forEach((table) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                        <td>${table}</td>
+                        <td>
+                            <button onclick="viewTable('${table}')">View</button>
+                            <button onclick="deleteTable('${table}')">Delete</button>
+                            <button onclick="generateReport('${table}')">Generate Report</button>
+                        </td>
+                    `;
+            tbody.appendChild(row);
+          });
+        } catch (error) {
+          console.error("Error fetching tables:", error);
+        }
+      }
+
+      async function viewTable(tableName) {
+        try {
+          const response = await fetch(
+            `http://localhost:3004/tableData?tableName=${tableName}`
+          );
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          const data = await response.json();
+          displayTableData(data);
+          document.getElementById("viewModal").style.display = "block";
+        } catch (error) {
+          console.error("Error fetching table data:", error);
+        }
+      }
+
+      function displayTableData(data) {
+        const tableDataDiv = document.getElementById("tableData");
+        tableDataDiv.innerHTML = "";
+
+        if (data.length === 0) {
+          tableDataDiv.innerHTML = "<p>No data available in this table.</p>";
+          return;
+        }
+
+        const table = document.createElement("table");
+
+        const thead = document.createElement("thead");
+        const tbody = document.createElement("tbody");
+
+        const headerRow = document.createElement("tr");
+        Object.keys(data[0]).forEach((key) => {
+          const th = document.createElement("th");
+          th.textContent = key;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        data.forEach((row) => {
+          const dataRow = document.createElement("tr");
+          Object.values(row).forEach((value) => {
+            const td = document.createElement("td");
+            td.textContent = value;
+            dataRow.appendChild(td);
+          });
+          tbody.appendChild(dataRow);
+        });
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        tableDataDiv.appendChild(table);
+      }
+
+      function closeModal() {
+        document.getElementById("viewModal").style.display = "none";
+      }
+
+      async function deleteTable(tableName) {
+        if (
+          confirm(`Are you sure you want to delete the table "${tableName}"?`)
+        ) {
+          try {
+            const response = await fetch("http://localhost:3004/deleteTable", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ tableName }),
+            });
+            const result = await response.json();
+            if (response.ok) {
+              alert("Table deleted successfully!");
+              fetchTables();
+            } else {
+              alert(`Error: ${result.error}`);
+            }
+          } catch (error) {
+            console.error("Error deleting table:", error);
+          }
+        }
+      }
+
+      function generateReport(tableName) {
+        window.location.href = `report.html?tableName=${tableName}`;
+      }
+    </script>
+  </body>
+</html>

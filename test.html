@@ -1,0 +1,215 @@
+<!-- <!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Table with Checkboxes</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            text-align: left;
+            background-color: #f2f2f2;
+        }
+        .button-container {
+            text-align: right;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Serial No.</th>
+                <th>Fields</th>
+                <th>Type</th>
+                <th>Select</th>
+                <th>Change Name (Optional)</th>
+            </tr>
+        </thead>
+        <tbody id="id1">
+        </tbody>
+    </table>
+    <div class="button-container">
+        <button onclick="proceed()">NEXT</button>
+    </div>
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch('http://localhost:3003/columns');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                const tbody = document.getElementById('id1');
+                tbody.innerHTML = '';
+                data.forEach((column, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${column.field}</td>
+                        <td>${column.type}</td>
+                        <td><input type="checkbox" /></td>
+                        <td><input type="text" placeholder="Optional" /></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+        fetchData();
+
+        function proceed() {
+            const selectedFields = [];
+            const rows = document.querySelectorAll('#id1 tr');
+            rows.forEach(row => {
+                const checkbox = row.querySelector('input[type="checkbox"]');
+                if (checkbox.checked) {
+                    const fieldName = row.cells[1].innerText;
+                    selectedFields.push(fieldName);
+                }
+            });
+            localStorage.setItem('selectedFields', JSON.stringify(selectedFields));
+            window.location.href = 'third.html';
+        }
+    </script>
+</body>
+</html>  -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Table with Checkboxes</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+      table {
+        border-collapse: collapse;
+        width: 98%;
+        margin: 10px;
+      }
+      th,
+      td {
+        padding: 5px 10px;
+        border: 1px solid #ddd;
+      }
+      th {
+        text-align: left;
+        background-color: #f2f2f2;
+      }
+      .button-container {
+        text-align: right;
+        margin-top: 10px;
+        margin-right: 1%;
+      }
+
+      nav {
+        background-color: #333;
+        font-family: Arial, sans-serif;
+        width: 100;
+        color: #fff;
+        padding: 0.5em;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      nav ul {
+        list-style: none;
+        margin: 5px;
+        padding: 0;
+      }
+
+      nav ul li {
+        display: inline;
+        margin-right: 1em;
+      }
+
+      nav ul li a {
+        color: #fff;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+   <nav>
+      <ul>
+        <li><a href="#" id="home-link">Home</a></li>
+      </ul>
+      <h1>Dynamic Reporting Framework</h1>
+    </nav>
+  <body>
+    <table>
+      <thead>
+        <tr>
+          <th>Serial No.</th>
+          <th>Fields</th>
+          <th>Type</th>
+          <th>Select</th>
+          <th>Change Name (Optional)</th>
+        </tr>
+      </thead>
+      <tbody id="id1"></tbody>
+    </table>
+    <div class="button-container">
+      <button onclick="proceed()">NEXT</button>
+    </div>
+    <script>
+        const homeLink = document.getElementById('home-link');
+        
+      async function fetchData() {
+        try {
+          const response = await fetch("http://localhost:3004/columns");
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          const data = await response.json();
+          const tbody = document.getElementById("id1");
+          tbody.innerHTML = "";
+          data.forEach((column, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${column.field}</td>
+                        <td>${column.type}</td>
+                        <td><input type="checkbox" /></td>
+                        <td><input type="text" placeholder="Optional" /></td>
+                    `;
+            tbody.appendChild(row);
+          });
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      }
+      fetchData();
+
+      function proceed() {
+        const selectedFields = [];
+        const rows = document.querySelectorAll("#id1 tr");
+        rows.forEach((row) => {
+          const checkbox = row.querySelector('input[type="checkbox"]');
+          if (checkbox.checked) {
+            const fieldName = row.cells[1].innerText;
+            const newName =
+              row.cells[4].querySelector("input").value || fieldName;
+            selectedFields.push({ original: fieldName, newName });
+          }
+        });
+        localStorage.setItem("selectedFields", JSON.stringify(selectedFields));
+        window.location.href = "third.html";
+      }
+    </script>
+  </body>
+</html>
